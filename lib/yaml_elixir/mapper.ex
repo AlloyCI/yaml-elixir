@@ -31,20 +31,22 @@ defmodule YamlElixir.Mapper do
   defp _tuples_to_map([], map, _options), do: map
 
   defp _tuples_to_map([{key, val} | rest], map, options) do
-    agregator_module = maps_aggregator(options)
-
     case key do
       {:yamerl_seq, :yamerl_node_seq, _tag, _log, _seq, _n} ->
+        temp_map = new_map(%{}, _to_map(key, options), _to_map(val, options))
+
         _tuples_to_map(
           rest,
-          agregator_module.(map, _to_map(key, options), _to_map(val, options)),
+          Map.merge(map, temp_map, &map_merge/3),
           options
         )
 
       {_yamler_element, _yamler_node_element, _tag, _log, name} ->
+        temp_map = new_map(%{}, key_for(name, options), _to_map(val, options))
+
         _tuples_to_map(
           rest,
-          agregator_module.(map, key_for(name, options), _to_map(val, options)),
+          Map.merge(map, temp_map, &map_merge/3),
           options
         )
     end
@@ -69,14 +71,17 @@ defmodule YamlElixir.Mapper do
     end
   end
 
-  defp append_kv(list, key, value),
-    do: [{key, value} | list]
+  defp map_merge(_k, v1, v2) when is_map(v1) and is_map(v2) do
+    Map.merge(v1, v2)
+  end
 
-  defp maps_aggregator(options) do
-    with true <- Keyword.get(options, :maps_as_keywords) do
-      &append_kv/3
-    else
-      _ -> &Map.put_new/3
-    end
+  defp map_merge(_k, _v1, v2), do: v2
+
+  defp new_map(map, "<<", map2) do
+    Map.merge(map, map2, &map_merge/3)
+  end
+
+  defp new_map(map, key, map2) do
+    Map.put_new(map, key, map2)
   end
 end

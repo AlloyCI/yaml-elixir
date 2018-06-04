@@ -1,6 +1,16 @@
 defmodule YamlElixirTest do
   use ExUnit.Case
 
+  test "should parse nested file with alias" do
+    assert_parse_file("nested_with_aliases", %{
+      "test" => %{"hello" => %{"part1" => "part1", "part2" => "part2"}},
+      "dev" => %{
+        "hello" => %{"part1" => "part1", "part2" => "part2", "part3" => "part3", "part4" => true}
+      },
+      "prod" => %{"hello" => %{"part1" => "part1", "part2" => "part2"}}
+    })
+  end
+
   test "should parse blank file" do
     assert_parse_file("blank", %{})
   end
@@ -166,22 +176,6 @@ defmodule YamlElixirTest do
 
     assert {:error, "malformed yaml"} = YamlElixir.read_all_from_file(path)
     assert {:error, "malformed yaml"} = YamlElixir.read_from_file(path)
-  end
-
-  test "should receive keyword list when used `maps_as_keywords` option" do
-    assert_parse_file(
-      "nested",
-      [{"test", [{"foo", "baz"}]}, {"dev", [{"foo", "bar"}]}, {"prod", [{"foo", "foo"}]}],
-      maps_as_keywords: true
-    )
-  end
-
-  test "should receive keyword list of keyword lists when used `maps_as_keywords` option and parsing nested map" do
-    assert_parse_file(
-      "nested_map",
-      [{"prod", [{"test", [{"foo", "baz"}]}, {"dev", [{"foo", "bar"}]}, {"foo", "foo"}]}],
-      maps_as_keywords: true
-    )
   end
 
   defp test_data(file_name), do: Path.join(File.cwd!(), "test/fixtures/#{file_name}.yml")

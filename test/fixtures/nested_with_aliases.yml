@@ -1,0 +1,12 @@
+test: &alias
+  hello:
+    part1: part1
+    part2: part2
+
+dev:
+  <<: *alias
+  hello:
+    part3: part3
+    part4: true
+
+prod: *alias
